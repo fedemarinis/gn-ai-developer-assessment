@@ -209,7 +209,7 @@ The CI workflow (`.github/workflows/ci.yml`) runs the same tests on Ubuntu with 
 
 No other secret is needed. The endpoint, deployment and API version are plain values in the workflow file, and the GitHub token is the built-in `GITHUB_TOKEN`, limited to `contents: read` and `pull-requests: write`.
 
-> **Example PR:** _[placeholder: link to a pull request in this repository with the bot's comment]_
+**Example PR:** [Automated PR review bot demonstration](https://github.com/fedemarinis/gn-ai-developer-assessment/pull/1)
 
 ### Local dry run
 
