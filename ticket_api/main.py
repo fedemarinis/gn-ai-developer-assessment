@@ -45,6 +45,7 @@ def health() -> dict:
     return {"status": "ok"}
 
 
+# API endpoints for managing support tickets.
 @app.post("/tickets", status_code=status.HTTP_201_CREATED)
 def create_ticket(data: TicketCreate) -> Ticket:
     try:
