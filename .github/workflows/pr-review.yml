@@ -1,0 +1,61 @@
+# Part 3: AI review of every pull request.
+# When a PR is opened, or new commits are pushed to it, this job fetches the PR's diff,
+# asks Azure OpenAI for a summary + suggestions and posts ONE new comment on the PR.
+#
+# Trust model:
+# - On `pull_request`, GitHub runs this workflow, the script and its requirements AS THEY ARE IN THE PR
+#   (the PR's merge commit). For a PR from a branch of this repo, that code runs with the Azure secret.
+#   Accepted: only collaborators with write access can push branches, and they are trusted with the secret.
+# - PRs from forks get NO repository secrets and a read-only token, so outside code never sees the key.
+#   Private repo: keep "Run workflows from fork pull requests" (and "Send secrets"/"Send write tokens") disabled.
+name: PR review bot
+
+on:
+  # Not pull_request_target: that trigger gives secrets and a write token to fork PRs. It is only safe as long as
+  # no PR code is ever checked out or run; one such change would hand the key to outsiders. pull_request fails closed.
+  pull_request:
+    types: [opened, synchronize]      # synchronize = new commits pushed to the PR branch
+
+# Least privilege for the built-in GITHUB_TOKEN: read the code/diff, write PR comments. Nothing else.
+permissions:
+  contents: read
+  pull-requests: write
+
+# A new push to the same PR cancels the review of the outdated commit that may still be running.
+concurrency:
+  group: pr-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Checks out the PR's merge commit, so the next steps run the PR's version of the bot (see trust model).
+      # The diff itself is never executed: the script downloads it as text through the API.
+      - name: Check out the pull request's merge commit
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false  # don't leave the token in .git/config; the script gets it via env
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pr_review/requirements.txt
+
+      - name: Install the bot's dependencies
+        run: python -m pip install -r pr_review/requirements.txt
+
+      # The Azure secret is given only to this step, not to the install step. Only the integer PR number is taken
+      # from the event; PR text (title, branch name) is never put into a shell command (script injection).
+      - name: Review the pull request and post one comment
+        run: python pr_review/analyze_pr.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}               # short-lived, created by GitHub for this run
+          PR_NUMBER: ${{ github.event.pull_request.number }}      # GITHUB_REPOSITORY is set by Actions itself
+          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}  # repository secret, masked in logs
+          AZURE_OPENAI_ENDPOINT: https://external-api.openai.azure.com/
+          AZURE_OPENAI_DEPLOYMENT: gpt-6-luna-c1
+          AZURE_OPENAI_API_VERSION: 2024-12-01-preview

@@ -1,0 +1,4 @@
+# Development and test dependencies (installs the runtime dependencies first).
+-r requirements.txt
+pytest==9.1.1
+# httpx, which FastAPI's TestClient needs in the tests, comes from requirements.txt.

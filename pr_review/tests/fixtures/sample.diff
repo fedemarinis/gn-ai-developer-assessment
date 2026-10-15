@@ -1,0 +1,17 @@
+diff --git a/demo/calculator.py b/demo/calculator.py
+index 3b18e51..a9c2f04 100644
+--- a/demo/calculator.py
++++ b/demo/calculator.py
+@@ -1,6 +1,12 @@
+ def add(a, b):
+     return a + b
+ 
+-def divide(a, b):
+-    return a / b
++def divide(a, b):
++    # TODO: handle b == 0
++    return a / b
++
++
++def average(values):
++    return sum(values) / len(values)

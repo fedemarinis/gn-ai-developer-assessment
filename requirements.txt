@@ -1,0 +1,11 @@
+# Runtime dependencies (exact versions, tested with Python 3.12).
+# Ticketing API (Part 1)
+fastapi==0.143.0
+uvicorn==0.54.0
+# Agent and its ticket API client (Part 2); python-dotenv loads the local .env file.
+# The PR review bot (Part 3) installs only pr_review/requirements.txt.
+httpx==0.28.1
+openai==3.29.0
+python-dotenv==1.2.4
+# Optional MCP backend and server (bonus): the official MCP Python SDK (it also provides anyio).
+mcp==2.3.0
