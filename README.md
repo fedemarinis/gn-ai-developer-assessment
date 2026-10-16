@@ -15,20 +15,7 @@ Everything is written in Python 3.12. A second workflow, `.github/workflows/ci.y
 
 ## Architecture
 
-```text
-                 python -m agent [--backend direct|mcp]
- User ── CLI ──> Agent loop ───────────> Azure OpenAI (gpt-6-luna-c1)
-                    │   tool calls
-                    ▼
-               ToolBackend
-          ┌─────────┴───────────┐
-   DirectBackend           McpBackend ──stdio──> MCP server (mcp_server/)
-          │                                          │
-          └──────────> ticket_client (HTTP) <────────┘
-                              │
-                              ▼
-                Mock Ticketing API (ticket_api/, FastAPI)
-```
+![System architecture](assets/architecture.svg)
 
 - **API (Part 1):** CRUD endpoints for tickets with a status filter. Every 4xx response has the shape `{"detail": "<readable sentence>"}`.
 - **Agent (Part 2):** a framework-free tool-calling loop on the Azure OpenAI SDK, with five tools (create, list with optional status filter, get, update, delete). The `status` tool parameter is a plain string with no list of valid values, so an invalid status reaches the API and the agent learns the valid options from the API's 422 message.

@@ -1,0 +1,194 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 932" width="880" height="932" role="img" aria-labelledby="diagram-title diagram-desc">
+  <title id="diagram-title">System architecture of the GenAI ticketing agent</title>
+  <desc id="diagram-desc">The user talks to a CLI inside the agent process. The agent loop exchanges messages and tool calls with Azure OpenAI over HTTPS and runs tools through the ToolBackend interface. DirectBackend uses TicketClient instance 1 in the agent process; McpBackend talks MCP over stdio to an MCP server subprocess that uses TicketClient instance 2. Both clients call the FastAPI ticket API over HTTP, which stores tickets in an in-memory TicketStore. At start-up the CLI checks GET /health. API errors (404, 422 with a detail message) come back to the model as tool results.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#424A53"/>
+    </marker>
+    <marker id="arrow-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8C959F"/>
+    </marker>
+    <marker id="arrow-error" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#B35A63"/>
+    </marker>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif; fill: #1F2328; stroke: none; dominant-baseline: central; }
+      .h1 { font-size: 20px; font-weight: 600; letter-spacing: 0.2px; }
+      .sub { font-size: 13px; fill: #57606A; }
+      .t { font-size: 13.5px; font-weight: 600; text-anchor: middle; letter-spacing: 0.2px; }
+      .m { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 11px; fill: #57606A; text-anchor: middle; }
+      .c { font-size: 11px; fill: #57606A; text-anchor: middle; }
+      .ct { font-size: 12.5px; font-weight: 600; fill: #424A53; text-anchor: end; letter-spacing: 0.3px; }
+      .cm { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 11px; fill: #6E7781; text-anchor: end; }
+      .el { font-size: 11px; fill: #57606A; }
+      .elm { font-size: 11px; fill: #57606A; text-anchor: middle; }
+      .hc { font-size: 10.5px; fill: #8C959F; text-anchor: middle; }
+      .eh { font-size: 12.5px; font-weight: 600; fill: #1F2328; }
+      .et { font-size: 11.5px; fill: #6E2B33; text-anchor: middle; }
+      .etm { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 11px; fill: #6E2B33; text-anchor: middle; }
+      .lg { font-size: 11px; fill: #57606A; }
+      .code { fill: #F1F6FD; stroke: #5A85C6; stroke-width: 1.3; }
+      .iface { fill: #FFFFFF; stroke: #5A85C6; stroke-width: 1.3; stroke-dasharray: 5 3; }
+      .ext { fill: #F5F2FC; stroke: #8566C2; stroke-width: 1.3; }
+      .api { fill: #EFF7F1; stroke: #4A8F60; stroke-width: 1.3; }
+      .user { fill: #F6F8FA; stroke: #8C959F; stroke-width: 1.3; }
+      .proc { fill: #FAFBFC; stroke: #8C959F; stroke-width: 1.2; stroke-dasharray: 6 4; }
+      .chip { fill: #FDF4F4; stroke: #D4959B; stroke-width: 1.2; }
+      .e { fill: none; stroke: #424A53; stroke-width: 1.5; }
+      .e-mcp { fill: none; stroke: #424A53; stroke-width: 1.5; stroke-dasharray: 6 4; }
+      .e-health { fill: none; stroke: #8C959F; stroke-width: 1.2; stroke-dasharray: 3 3; }
+      .e-err { fill: none; stroke: #B35A63; stroke-width: 1.3; }
+    </style>
+  </defs>
+
+  <!-- Opaque card: the diagram looks the same in light and dark page themes -->
+  <rect id="background" x="0.5" y="0.5" width="879" height="931" rx="12" ry="12" fill="#FFFFFF" stroke="#D0D7DE"/>
+
+  <g id="layer-header">
+    <text class="h1" x="24" y="38">System architecture</text>
+    <text class="sub" x="24" y="62">Agent, MCP integration and Ticketing API</text>
+  </g>
+
+  <g id="layer-containers">
+    <g id="group-agent-process">
+      <rect class="proc" x="24" y="148" width="416" height="492" rx="10" ry="10"/>
+      <text class="ct" x="420" y="170">Agent process</text>
+      <text class="cm" x="420" y="187">python -m agent</text>
+    </g>
+    <g id="group-mcp-process">
+      <rect class="proc" x="576" y="420" width="280" height="220" rx="10" ry="10"/>
+      <text class="ct" x="836" y="442">MCP server subprocess</text>
+      <text class="cm" x="836" y="459">python -m mcp_server.server</text>
+    </g>
+    <g id="group-api-process">
+      <rect class="proc" x="24" y="684" width="832" height="148" rx="10" ry="10"/>
+      <text class="ct" x="836" y="706">Ticket API process</text>
+      <text class="cm" x="836" y="723">python -m uvicorn ticket_api.main:app</text>
+    </g>
+  </g>
+
+  <g id="layer-nodes">
+    <g id="node-user">
+      <rect class="user" x="188" y="88" width="120" height="36" rx="18" ry="18"/>
+      <text class="t" x="248" y="106">User</text>
+    </g>
+    <g id="node-cli">
+      <rect class="code" x="120" y="208" width="256" height="52" rx="8" ry="8"/>
+      <text class="t" x="248" y="228">CLI</text>
+      <text class="m" x="248" y="245">agent/cli.py</text>
+    </g>
+    <g id="node-agent-loop">
+      <rect class="code" x="120" y="292" width="256" height="64" rx="8" ry="8"/>
+      <text class="t" x="248" y="311">Agent loop</text>
+      <text class="m" x="248" y="328">agent/agent.py</text>
+      <text class="c" x="248" y="343">≤ 8 model calls per user turn</text>
+    </g>
+    <g id="node-tool-backend">
+      <rect class="iface" x="120" y="388" width="256" height="52" rx="8" ry="8"/>
+      <text class="t" x="248" y="408">«interface» ToolBackend</text>
+      <text class="m" x="248" y="425">agent/backends.py</text>
+    </g>
+    <g id="node-direct-backend">
+      <rect class="code" x="76" y="480" width="160" height="52" rx="8" ry="8"/>
+      <text class="t" x="156" y="500">DirectBackend</text>
+      <text class="c" x="156" y="517">default · in-process</text>
+    </g>
+    <g id="node-mcp-backend">
+      <rect class="code" x="260" y="480" width="160" height="52" rx="8" ry="8"/>
+      <text class="t" x="340" y="500">McpBackend</text>
+      <text class="m" x="340" y="517">--backend mcp</text>
+    </g>
+    <g id="node-ticket-client-1">
+      <rect class="code" x="76" y="564" width="160" height="52" rx="8" ry="8"/>
+      <text class="t" x="156" y="584">TicketClient</text>
+      <text class="c" x="156" y="601">instance #1 · httpx</text>
+    </g>
+    <g id="node-azure-openai">
+      <rect class="ext" x="576" y="292" width="280" height="64" rx="8" ry="8"/>
+      <text class="t" x="716" y="311">Azure OpenAI</text>
+      <text class="m" x="716" y="328">gpt-6-luna-c1</text>
+      <text class="c" x="716" y="343">external service · HTTPS</text>
+    </g>
+    <g id="node-mcp-server">
+      <rect class="code" x="596" y="480" width="240" height="52" rx="8" ry="8"/>
+      <text class="t" x="716" y="500">MCP server · 5 tools</text>
+      <text class="m" x="716" y="517">mcp_server/server.py</text>
+    </g>
+    <g id="node-ticket-client-2">
+      <rect class="code" x="596" y="564" width="240" height="52" rx="8" ry="8"/>
+      <text class="t" x="716" y="584">TicketClient</text>
+      <text class="c" x="716" y="601">instance #2 · httpx</text>
+    </g>
+    <g id="node-fastapi">
+      <rect class="api" x="76" y="748" width="360" height="64" rx="8" ry="8"/>
+      <text class="t" x="256" y="767">FastAPI app</text>
+      <text class="m" x="256" y="784">ticket_api/main.py</text>
+      <text class="c" x="256" y="799">/tickets CRUD + status filter · /health</text>
+    </g>
+    <g id="node-ticket-store">
+      <rect class="api" x="596" y="748" width="240" height="64" rx="8" ry="8"/>
+      <text class="t" x="716" y="767">TicketStore</text>
+      <text class="m" x="716" y="784">ticket_api/storage.py</text>
+      <text class="c" x="716" y="799">in-memory dict + lock</text>
+    </g>
+  </g>
+
+  <g id="layer-edges">
+    <path id="edge-user-cli" class="e" d="M 248,124 V 208" marker-end="url(#arrow)"/>
+    <path id="edge-cli-agent-loop" class="e" d="M 248,260 V 292" marker-end="url(#arrow)"/>
+    <text class="el" x="258" y="276">ask(text)</text>
+    <path id="edge-agent-loop-tool-backend" class="e" d="M 248,356 V 388" marker-end="url(#arrow)"/>
+    <text class="el" x="258" y="372">call(name, args)</text>
+
+    <path id="edge-agent-loop-azure" class="e" d="M 376,313 H 576" marker-end="url(#arrow)"/>
+    <text class="elm" x="508" y="301">messages + tool specs</text>
+    <path id="edge-azure-agent-loop" class="e" d="M 576,335 H 376" marker-end="url(#arrow)"/>
+    <text class="elm" x="508" y="349">tool calls / answer</text>
+
+    <path id="edge-tool-backend-direct" class="e" d="M 248,440 V 460 H 156 V 480" marker-end="url(#arrow)"/>
+    <path id="edge-tool-backend-mcp" class="e-mcp" d="M 248,460 H 340 V 480" marker-end="url(#arrow)"/>
+    <path id="edge-direct-ticket-client-1" class="e" d="M 156,532 V 564" marker-end="url(#arrow)"/>
+
+    <path id="edge-mcp-backend-mcp-server" class="e-mcp" d="M 420,506 H 596" marker-end="url(#arrow)"/>
+    <text class="elm" x="508" y="494">MCP over stdio</text>
+    <text class="elm" x="508" y="519">tools/list · tools/call</text>
+    <path id="edge-mcp-server-ticket-client-2" class="e-mcp" d="M 716,532 V 564" marker-end="url(#arrow)"/>
+
+    <path id="edge-ticket-client-1-fastapi" class="e" d="M 156,616 V 748" marker-end="url(#arrow)"/>
+    <text class="el" x="166" y="662">HTTP / JSON</text>
+    <path id="edge-ticket-client-2-fastapi" class="e-mcp" d="M 716,616 V 660 H 380 V 748" marker-end="url(#arrow)"/>
+    <text class="elm" x="508" y="648">HTTP / JSON</text>
+
+    <path id="edge-fastapi-ticket-store" class="e" d="M 436,780 H 596" marker-end="url(#arrow)"/>
+    <text class="elm" x="516" y="768">read / write</text>
+
+    <path id="edge-cli-health" class="e-health" d="M 120,234 H 40 V 780 H 76" marker-end="url(#arrow-muted)"/>
+    <text class="hc" x="80" y="222">GET /health</text>
+    <text class="hc" x="80" y="246">at start-up</text>
+  </g>
+
+  <g id="layer-errors">
+    <text class="eh" x="24" y="866">Error path</text>
+    <g id="error-chain">
+      <rect class="chip" x="104" y="850" width="180" height="32" rx="16" ry="16"/>
+      <text class="et" x="194" y="866">API 404 / 422 + detail</text>
+      <path class="e-err" d="M 284,866 H 307" marker-end="url(#arrow-error)"/>
+      <rect class="chip" x="308" y="850" width="236" height="32" rx="16" ry="16"/>
+      <text class="etm" x="426" y="866">{ok: false, status_code, detail}</text>
+      <path class="e-err" d="M 544,866 H 567" marker-end="url(#arrow-error)"/>
+      <rect class="chip" x="568" y="850" width="288" height="32" rx="16" ry="16"/>
+      <text class="et" x="712" y="866">tool result → model explains it to the user</text>
+    </g>
+  </g>
+
+  <g id="layer-legend">
+    <path class="e" d="M 24,908 H 54" marker-end="url(#arrow)"/>
+    <text class="lg" x="62" y="908">request path</text>
+    <path class="e-mcp" d="M 160,908 H 190" marker-end="url(#arrow)"/>
+    <text class="lg" x="198" y="908">MCP mode only (--backend mcp)</text>
+    <path class="e-health" d="M 396,908 H 426" marker-end="url(#arrow-muted)"/>
+    <text class="lg" x="434" y="908">start-up health check</text>
+    <rect class="proc" x="580" y="900" width="28" height="16" rx="4" ry="4"/>
+    <text class="lg" x="616" y="908">process boundary</text>
+  </g>
+</svg>
